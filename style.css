@@ -1,3 +1,212 @@
+const { useState, useEffect } = React;
+
+const WRVUTracker = () => {
+    // ... [Previous state declarations remain the same] ...
+
+    const [dragGroup, setDragGroup] = useState(null);
+    const [dragCode, setDragCode] = useState(null);
+    const [dragOverGroup, setDragOverGroup] = useState(null);
+    const [dragOverCode, setDragOverCode] = useState(null);
+
+    // Drag and Drop handlers for Groups
+    const handleGroupDragStart = (e, groupId) => {
+        setDragGroup(groupId);
+        e.dataTransfer.effectAllowed = 'move';
+        e.target.style.opacity = '0.5';
+    };
+
+    const handleGroupDragEnd = (e) => {
+        setDragGroup(null);
+        setDragOverGroup(null);
+        e.target.style.opacity = '1';
+    };
+
+    const handleGroupDragOver = (e, groupId) => {
+        e.preventDefault();
+        if (dragGroup !== groupId) {
+            setDragOverGroup(groupId);
+        }
+    };
+
+    const handleGroupDrop = (e, targetGroupId) => {
+        e.preventDefault();
+        if (dragGroup && dragGroup !== targetGroupId) {
+            setCptGroups(groups => {
+                const reorderedGroups = [...groups];
+                const draggedGroup = reorderedGroups.find(g => g.id === dragGroup);
+                const targetIndex = reorderedGroups.findIndex(g => g.id === targetGroupId);
+                const sourceIndex = reorderedGroups.findIndex(g => g.id === dragGroup);
+                
+                reorderedGroups.splice(sourceIndex, 1);
+                reorderedGroups.splice(targetIndex, 0, draggedGroup);
+                
+                return reorderedGroups;
+            });
+        }
+    };
+
+    // Drag and Drop handlers for CPT Codes
+    const handleCodeDragStart = (e, groupId, code) => {
+        setDragCode({ groupId, code: code.code });
+        e.dataTransfer.effectAllowed = 'move';
+        e.target.style.opacity = '0.5';
+    };
+
+    const handleCodeDragEnd = (e) => {
+        setDragCode(null);
+        setDragOverCode(null);
+        e.target.style.opacity = '1';
+    };
+
+    const handleCodeDragOver = (e, groupId, code) => {
+        e.preventDefault();
+        if (!dragCode || dragCode.code !== code.code) {
+            setDragOverCode({ groupId, code: code.code });
+        }
+    };
+
+    const handleCodeDrop = (e, targetGroupId, targetCode) => {
+        e.preventDefault();
+        if (dragCode) {
+            setCptGroups(groups => {
+                const newGroups = [...groups];
+                const sourceGroup = newGroups.find(g => g.id === dragCode.groupId);
+                const targetGroup = newGroups.find(g => g.id === targetGroupId);
+                
+                const draggedCode = sourceGroup.codes.find(c => c.code === dragCode.code);
+                const sourceIndex = sourceGroup.codes.findIndex(c => c.code === dragCode.code);
+                const targetIndex = targetGroup.codes.findIndex(c => c.code === targetCode.code);
+
+                // Remove from source
+                sourceGroup.codes.splice(sourceIndex, 1);
+                
+                // Add to target
+                if (targetGroupId === dragCode.groupId) {
+                    // Same group, just reorder
+                    sourceGroup.codes.splice(targetIndex, 0, draggedCode);
+                } else {
+                    // Different group
+                    targetGroup.codes.splice(targetIndex, 0, draggedCode);
+                }
+
+                return newGroups;
+            });
+        }
+    };
+
+    // Modified render for groups to include drag and drop
+    const renderGroups = () => (
+        cptGroups.map((group) => (
+            <div 
+                key={group.id} 
+                className={`card mt-4 ${dragOverGroup === group.id ? 'border-2 border-primary' : ''}`}
+                draggable="true"
+                onDragStart={(e) => handleGroupDragStart(e, group.id)}
+                onDragEnd={handleGroupDragEnd}
+                onDragOver={(e) => handleGroupDragOver(e, group.id)}
+                onDrop={(e) => handleGroupDrop(e, group.id)}
+            >
+                <div className="card-header cursor-move" style={{ background: 'var(--card-background)', borderBottom: '1px solid var(--border)' }}>
+                    {editingGroupTitle === group.id ? (
+                        <div className="flex gap-2">
+                            <input
+                                type="text"
+                                value={newGroupTitle}
+                                onChange={(e) => setNewGroupTitle(e.target.value)}
+                                className="input flex-1"
+                                placeholder="Group Title"
+                            />
+                            <button 
+                                onClick={() => saveGroupTitle(group.id)}
+                                className="btn btn-primary"
+                            >
+                                Save
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="flex justify-between items-center">
+                            <h2 className="card-title" style={{ color: 'var(--text-primary)' }}>
+                                ≡ {group.title}
+                            </h2>
+                            <div className="flex gap-2">
+                                <button 
+                                    onClick={() => startEditingGroupTitle(group.id, group.title)}
+                                    className="btn btn-primary"
+                                >
+                                    Edit Title
+                                </button>
+                                <button 
+                                    onClick={() => deleteGroup(group.id)}
+                                    className="btn btn-destructive"
+                                >
+                                    Delete Group
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+                <div className="card-content">
+                    <div className="grid">
+                        {group.codes.map((code) => (
+                            <div 
+                                key={code.code}
+                                className={`card cursor-move ${dragOverCode?.groupId === group.id && dragOverCode?.code === code.code ? 'border-2 border-primary' : ''}`}
+                                draggable="true"
+                                onDragStart={(e) => handleCodeDragStart(e, group.id, code)}
+                                onDragEnd={handleCodeDragEnd}
+                                onDragOver={(e) => handleCodeDragOver(e, group.id, code)}
+                                onDrop={(e) => handleCodeDrop(e, group.id, code)}
+                            >
+                                <div className="p-4">
+                                    <div className="flex justify-between">
+                                        <div>
+                                            <div className="font-bold">≡ {code.code}</div>
+                                            <div className="text-sm text-gray-600">{code.description}</div>
+                                            <div className="text-sm">wRVUs: {code.wrvus}</div>
+                                        </div>
+                                        <div>
+                                            <button 
+                                                onClick={() => addEntry(code)}
+                                                className="btn btn-primary mr-2"
+                                            >
+                                                Add
+                                            </button>
+                                            <button 
+                                                onClick={() => deleteCPTCode(group.id, code.code)}
+                                                className="btn btn-destructive"
+                                            >
+                                                Delete
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        ))
+    );
+
+    return (
+        <div className="container">
+            <div className="card">
+                <div className="card-header">
+                    <h1 className="card-title">wRVU Tracker</h1>
+                </div>
+                <div className="card-content">
+                    {/* Previous date input and stats section remains the same */}
+                    
+                    {renderGroups()}
+
+                    {/* Rest of the components (add new CPT, daily entries, etc.) remain the same */}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+ReactDOM.render(<WRVUTracker />, document.getElementById('root'));
 /* Add these styles to your existing CSS */
 
 .cursor-move {
