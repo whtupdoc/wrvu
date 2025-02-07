@@ -1,12 +1,23 @@
 const { useState, useEffect } = React;
 
 const WRVUTracker = () => {
-    const [cptCodes, setCptCodes] = useState(() => {
-        const saved = localStorage.getItem('cptCodes');
+    const [cptGroups, setCptGroups] = useState(() => {
+        const saved = localStorage.getItem('cptGroups');
         return saved ? JSON.parse(saved) : [
-            { code: '99213', description: 'Office Visit Level 3', wrvus: 0.97 },
-            { code: '99214', description: 'Office Visit Level 4', wrvus: 1.5 },
-            { code: '99215', description: 'Office Visit Level 5', wrvus: 2.11 }
+            {
+                id: 'evaluation',
+                title: 'Evaluation & Management',
+                codes: [
+                    { code: '99213', description: 'Office Visit Level 3', wrvus: 0.97 },
+                    { code: '99214', description: 'Office Visit Level 4', wrvus: 1.5 },
+                    { code: '99215', description: 'Office Visit Level 5', wrvus: 2.11 }
+                ]
+            },
+            {
+                id: 'procedures',
+                title: 'Procedures',
+                codes: []
+            }
         ];
     });
 
@@ -15,23 +26,62 @@ const WRVUTracker = () => {
         return saved ? JSON.parse(saved) : [];
     });
 
-    const [newCode, setNewCode] = useState({ code: '', description: '', wrvus: '' });
+    const [newCode, setNewCode] = useState({ groupId: '', code: '', description: '', wrvus: '' });
     const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-    const [exportData, setExportData] = useState('');
+    const [editingGroupTitle, setEditingGroupTitle] = useState(null);
+    const [newGroupTitle, setNewGroupTitle] = useState('');
 
     useEffect(() => {
-        localStorage.setItem('cptCodes', JSON.stringify(cptCodes));
-    }, [cptCodes]);
+        localStorage.setItem('cptGroups', JSON.stringify(cptGroups));
+    }, [cptGroups]);
 
     useEffect(() => {
         localStorage.setItem('dailyEntries', JSON.stringify(dailyEntries));
     }, [dailyEntries]);
 
     const addCPTCode = () => {
-        if (newCode.code && newCode.description && newCode.wrvus) {
-            setCptCodes([...cptCodes, { ...newCode, wrvus: parseFloat(newCode.wrvus) }]);
-            setNewCode({ code: '', description: '', wrvus: '' });
+        if (newCode.groupId && newCode.code && newCode.description && newCode.wrvus) {
+            setCptGroups(groups => groups.map(group => 
+                group.id === newCode.groupId
+                    ? { ...group, codes: [...group.codes, { 
+                        code: newCode.code, 
+                        description: newCode.description, 
+                        wrvus: parseFloat(newCode.wrvus) 
+                    }]}
+                    : group
+            ));
+            setNewCode({ groupId: '', code: '', description: '', wrvus: '' });
         }
+    };
+
+    const addNewGroup = () => {
+        const newGroup = {
+            id: `group-${Date.now()}`,
+            title: 'New Group',
+            codes: []
+        };
+        setCptGroups([...cptGroups, newGroup]);
+    };
+
+    const startEditingGroupTitle = (groupId, currentTitle) => {
+        setEditingGroupTitle(groupId);
+        setNewGroupTitle(currentTitle);
+    };
+
+    const saveGroupTitle = (groupId) => {
+        if (newGroupTitle.trim()) {
+            setCptGroups(groups => groups.map(group =>
+                group.id === groupId
+                    ? { ...group, title: newGroupTitle.trim() }
+                    : group
+            ));
+            setEditingGroupTitle(null);
+            setNewGroupTitle('');
+        }
+    };
+
+    const deleteGroup = (groupId) => {
+        setCptGroups(groups => groups.filter(group => group.id !== groupId));
     };
 
     const addEntry = (cptCode) => {
@@ -55,8 +105,12 @@ const WRVUTracker = () => {
             .toFixed(2);
     };
 
-    const deleteCPTCode = (codeToDelete) => {
-        setCptCodes(cptCodes.filter(code => code.code !== codeToDelete));
+    const deleteCPTCode = (groupId, codeToDelete) => {
+        setCptGroups(groups => groups.map(group =>
+            group.id === groupId
+                ? { ...group, codes: group.codes.filter(code => code.code !== codeToDelete) }
+                : group
+        ));
     };
 
     const deleteEntry = (timestamp) => {
@@ -82,28 +136,6 @@ const WRVUTracker = () => {
         URL.revokeObjectURL(url);
     };
 
-    const importData = (event) => {
-        const file = event.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const text = e.target.result;
-                const rows = text.split('\n').slice(1); // Skip header row
-                const newEntries = rows.map(row => {
-                    const [date, cptCode, wrvus] = row.split(',');
-                    return {
-                        date,
-                        cptCode,
-                        wrvus: parseFloat(wrvus),
-                        timestamp: new Date().toISOString()
-                    };
-                });
-                setDailyEntries([...dailyEntries, ...newEntries]);
-            };
-            reader.readAsText(file);
-        }
-    };
-
     return (
         <div className="container">
             <div className="card">
@@ -124,40 +156,94 @@ const WRVUTracker = () => {
                         </div>
                     </div>
 
-                    <div className="grid">
-                        {cptCodes.map((code) => (
-                            <div key={code.code} className="card">
-                                <div className="p-4">
-                                    <div className="flex justify-between">
-                                        <div>
-                                            <div className="font-bold">{code.code}</div>
-                                            <div className="text-sm text-gray-600">{code.description}</div>
-                                            <div className="text-sm">wRVUs: {code.wrvus}</div>
-                                        </div>
-                                        <div>
+                    {cptGroups.map((group) => (
+                        <div key={group.id} className="card mt-4">
+                            <div className="card-header" style={{ background: 'var(--card-background)', borderBottom: '1px solid var(--border)' }}>
+                                {editingGroupTitle === group.id ? (
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            value={newGroupTitle}
+                                            onChange={(e) => setNewGroupTitle(e.target.value)}
+                                            className="input flex-1"
+                                            placeholder="Group Title"
+                                        />
+                                        <button 
+                                            onClick={() => saveGroupTitle(group.id)}
+                                            className="btn btn-primary"
+                                        >
+                                            Save
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="flex justify-between items-center">
+                                        <h2 className="card-title" style={{ color: 'var(--text-primary)' }}>{group.title}</h2>
+                                        <div className="flex gap-2">
                                             <button 
-                                                onClick={() => addEntry(code)}
-                                                className="btn btn-primary mr-2"
+                                                onClick={() => startEditingGroupTitle(group.id, group.title)}
+                                                className="btn btn-primary"
                                             >
-                                                Add
+                                                Edit Title
                                             </button>
                                             <button 
-                                                onClick={() => deleteCPTCode(code.code)}
+                                                onClick={() => deleteGroup(group.id)}
                                                 className="btn btn-destructive"
                                             >
-                                                Delete
+                                                Delete Group
                                             </button>
                                         </div>
                                     </div>
+                                )}
+                            </div>
+                            <div className="card-content">
+                                <div className="grid">
+                                    {group.codes.map((code) => (
+                                        <div key={code.code} className="card">
+                                            <div className="p-4">
+                                                <div className="flex justify-between">
+                                                    <div>
+                                                        <div className="font-bold">{code.code}</div>
+                                                        <div className="text-sm text-gray-600">{code.description}</div>
+                                                        <div className="text-sm">wRVUs: {code.wrvus}</div>
+                                                    </div>
+                                                    <div>
+                                                        <button 
+                                                            onClick={() => addEntry(code)}
+                                                            className="btn btn-primary mr-2"
+                                                        >
+                                                            Add
+                                                        </button>
+                                                        <button 
+                                                            onClick={() => deleteCPTCode(group.id, code.code)}
+                                                            className="btn btn-destructive"
+                                                        >
+                                                            Delete
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
-                        ))}
-                    </div>
+                        </div>
+                    ))}
 
                     <div className="card mt-4">
                         <div className="p-4">
                             <h3 className="font-bold mb-2">Add New CPT Code</h3>
                             <div className="flex gap-2 flex-wrap">
+                                <select
+                                    value={newCode.groupId}
+                                    onChange={(e) => setNewCode({ ...newCode, groupId: e.target.value })}
+                                    className="input"
+                                    style={{ width: 'auto' }}
+                                >
+                                    <option value="">Select Group</option>
+                                    {cptGroups.map(group => (
+                                        <option key={group.id} value={group.id}>{group.title}</option>
+                                    ))}
+                                </select>
                                 <input
                                     placeholder="CPT Code"
                                     value={newCode.code}
@@ -184,6 +270,14 @@ const WRVUTracker = () => {
                                     Save
                                 </button>
                             </div>
+                        </div>
+                    </div>
+
+                    <div className="card mt-4">
+                        <div className="p-4">
+                            <button onClick={addNewGroup} className="btn btn-primary">
+                                Add New Group
+                            </button>
                         </div>
                     </div>
 
@@ -218,24 +312,9 @@ const WRVUTracker = () => {
 
                     <div className="card mt-4">
                         <div className="p-4">
-                            <h3 className="font-bold mb-2">Data Management</h3>
-                            <div className="flex gap-2">
-                                <button onClick={exportToCSV} className="btn btn-primary">
-                                    Export to CSV
-                                </button>
-                                <div>
-                                    <input
-                                        type="file"
-                                        accept=".csv"
-                                        onChange={importData}
-                                        style={{ display: 'none' }}
-                                        id="import-input"
-                                    />
-                                    <label htmlFor="import-input" className="btn btn-primary cursor-pointer">
-                                        Import CSV
-                                    </label>
-                                </div>
-                            </div>
+                            <button onClick={exportToCSV} className="btn btn-primary">
+                                Export to CSV
+                            </button>
                         </div>
                     </div>
                 </div>
