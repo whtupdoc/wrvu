@@ -320,3 +320,7 @@ const WRVUTracker = () => {
                 </div>
             </div>
         </div>
+    );
+};
+
+ReactDOM.render(<WRVUTracker />, document.getElementById('root'));
