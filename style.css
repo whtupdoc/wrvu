@@ -1,326 +1,254 @@
-const { useState, useEffect } = React;
+/* Base styles */
+:root {
+    --primary: #4f46e5;
+    --primary-hover: #4338ca;
+    --destructive: #ef4444;
+    --destructive-hover: #dc2626;
+    --background: #f8fafc;
+    --card-background: #ffffff;
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
+    --border: #e2e8f0;
+    --success: #10b981;
+}
 
-const WRVUTracker = () => {
-    const [cptGroups, setCptGroups] = useState(() => {
-        const saved = localStorage.getItem('cptGroups');
-        return saved ? JSON.parse(saved) : [
-            {
-                id: 'evaluation',
-                title: 'Evaluation & Management',
-                codes: [
-                    { code: '99213', description: 'Office Visit Level 3', wrvus: 0.97 },
-                    { code: '99214', description: 'Office Visit Level 4', wrvus: 1.5 },
-                    { code: '99215', description: 'Office Visit Level 5', wrvus: 2.11 }
-                ]
-            },
-            {
-                id: 'procedures',
-                title: 'Procedures',
-                codes: []
-            }
-        ];
-    });
+body {
+    background-color: var(--background);
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    color: var(--text-primary);
+}
 
-    const [dailyEntries, setDailyEntries] = useState(() => {
-        const saved = localStorage.getItem('dailyEntries');
-        return saved ? JSON.parse(saved) : [];
-    });
+/* Card styles */
+.card {
+    background-color: var(--card-background);
+    border-radius: 1rem;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    margin-bottom: 1rem;
+    border: 1px solid var(--border);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
 
-    const [newCode, setNewCode] = useState({ groupId: '', code: '', description: '', wrvus: '' });
-    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-    const [editingGroupTitle, setEditingGroupTitle] = useState(null);
-    const [newGroupTitle, setNewGroupTitle] = useState('');
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
 
-    useEffect(() => {
-        localStorage.setItem('cptGroups', JSON.stringify(cptGroups));
-    }, [cptGroups]);
+.card-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(to right, var(--primary), #818cf8);
+    border-radius: 1rem 1rem 0 0;
+}
 
-    useEffect(() => {
-        localStorage.setItem('dailyEntries', JSON.stringify(dailyEntries));
-    }, [dailyEntries]);
+.card-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+    margin: 0;
+}
 
-    const addCPTCode = () => {
-        if (newCode.groupId && newCode.code && newCode.description && newCode.wrvus) {
-            setCptGroups(groups => groups.map(group => 
-                group.id === newCode.groupId
-                    ? { ...group, codes: [...group.codes, { 
-                        code: newCode.code, 
-                        description: newCode.description, 
-                        wrvus: parseFloat(newCode.wrvus) 
-                    }]}
-                    : group
-            ));
-            setNewCode({ groupId: '', code: '', description: '', wrvus: '' });
-        }
-    };
+.card-content {
+    padding: 1.5rem;
+}
 
-    const addNewGroup = () => {
-        const newGroup = {
-            id: `group-${Date.now()}`,
-            title: 'New Group',
-            codes: []
-        };
-        setCptGroups([...cptGroups, newGroup]);
-    };
+/* Button styles */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.625rem 1.25rem;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+}
 
-    const startEditingGroupTitle = (groupId, currentTitle) => {
-        setEditingGroupTitle(groupId);
-        setNewGroupTitle(currentTitle);
-    };
+.btn-primary {
+    background-color: var(--primary);
+    color: white;
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+}
 
-    const saveGroupTitle = (groupId) => {
-        if (newGroupTitle.trim()) {
-            setCptGroups(groups => groups.map(group =>
-                group.id === groupId
-                    ? { ...group, title: newGroupTitle.trim() }
-                    : group
-            ));
-            setEditingGroupTitle(null);
-            setNewGroupTitle('');
-        }
-    };
+.btn-primary:hover {
+    background-color: var(--primary-hover);
+    transform: translateY(-1px);
+}
 
-    const deleteGroup = (groupId) => {
-        setCptGroups(groups => groups.filter(group => group.id !== groupId));
-    };
+.btn-destructive {
+    background-color: var(--destructive);
+    color: white;
+}
 
-    const addEntry = (cptCode) => {
-        const entry = {
-            date: selectedDate,
-            cptCode: cptCode.code,
-            wrvus: cptCode.wrvus,
-            timestamp: new Date().toISOString()
-        };
-        setDailyEntries([...dailyEntries, entry]);
-    };
+.btn-destructive:hover {
+    background-color: var(--destructive-hover);
+    transform: translateY(-1px);
+}
 
-    const getTotalWRVUs = () => {
-        return dailyEntries.reduce((sum, entry) => sum + entry.wrvus, 0).toFixed(2);
-    };
+/* Input styles */
+.input {
+    width: 100%;
+    padding: 0.625rem;
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    margin-bottom: 0.5rem;
+    transition: all 0.2s;
+    font-size: 0.875rem;
+}
 
-    const getDailyWRVUs = (date) => {
-        return dailyEntries
-            .filter(entry => entry.date === date)
-            .reduce((sum, entry) => sum + entry.wrvus, 0)
-            .toFixed(2);
-    };
+.input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
+}
 
-    const deleteCPTCode = (groupId, codeToDelete) => {
-        setCptGroups(groups => groups.map(group =>
-            group.id === groupId
-                ? { ...group, codes: group.codes.filter(code => code.code !== codeToDelete) }
-                : group
-        ));
-    };
+/* Grid layout */
+.grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+}
 
-    const deleteEntry = (timestamp) => {
-        setDailyEntries(dailyEntries.filter(entry => entry.timestamp !== timestamp));
-    };
+/* Entry list styles */
+.entry-list {
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+}
 
-    const exportToCSV = () => {
-        const headers = ['Date', 'CPT Code', 'wRVUs'];
-        const data = dailyEntries.map(entry => [
-            entry.date,
-            entry.cptCode,
-            entry.wrvus
-        ]);
-        const csv = [headers, ...data].map(row => row.join(',')).join('\n');
-        const blob = new Blob([csv], { type: 'text/csv' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `wrvu-export-${new Date().toISOString().split('T')[0]}.csv`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-    };
+.entry-list::-webkit-scrollbar {
+    width: 6px;
+}
 
-    return (
-        <div className="container">
-            <div className="card">
-                <div className="card-header">
-                    <h1 className="card-title">wRVU Tracker</h1>
-                </div>
-                <div className="card-content">
-                    <div className="flex justify-between mb-4">
-                        <input
-                            type="date"
-                            value={selectedDate}
-                            onChange={(e) => setSelectedDate(e.target.value)}
-                            className="input"
-                            style={{ width: 'auto' }}
-                        />
-                        <div className="stats">
-                            Total wRVUs: {getTotalWRVUs()}
-                        </div>
-                    </div>
+.entry-list::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 3px;
+}
 
-                    {cptGroups.map((group) => (
-                        <div key={group.id} className="card mt-4">
-                            <div className="card-header" style={{ background: 'var(--card-background)', borderBottom: '1px solid var(--border)' }}>
-                                {editingGroupTitle === group.id ? (
-                                    <div className="flex gap-2">
-                                        <input
-                                            type="text"
-                                            value={newGroupTitle}
-                                            onChange={(e) => setNewGroupTitle(e.target.value)}
-                                            className="input flex-1"
-                                            placeholder="Group Title"
-                                        />
-                                        <button 
-                                            onClick={() => saveGroupTitle(group.id)}
-                                            className="btn btn-primary"
-                                        >
-                                            Save
-                                        </button>
-                                    </div>
-                                ) : (
-                                    <div className="flex justify-between items-center">
-                                        <h2 className="card-title" style={{ color: 'var(--text-primary)' }}>{group.title}</h2>
-                                        <div className="flex gap-2">
-                                            <button 
-                                                onClick={() => startEditingGroupTitle(group.id, group.title)}
-                                                className="btn btn-primary"
-                                            >
-                                                Edit Title
-                                            </button>
-                                            <button 
-                                                onClick={() => deleteGroup(group.id)}
-                                                className="btn btn-destructive"
-                                            >
-                                                Delete Group
-                                            </button>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                            <div className="card-content">
-                                <div className="grid">
-                                    {group.codes.map((code) => (
-                                        <div key={code.code} className="card">
-                                            <div className="p-4">
-                                                <div className="flex justify-between">
-                                                    <div>
-                                                        <div className="font-bold">{code.code}</div>
-                                                        <div className="text-sm text-gray-600">{code.description}</div>
-                                                        <div className="text-sm">wRVUs: {code.wrvus}</div>
-                                                    </div>
-                                                    <div>
-                                                        <button 
-                                                            onClick={() => addEntry(code)}
-                                                            className="btn btn-primary mr-2"
-                                                        >
-                                                            Add
-                                                        </button>
-                                                        <button 
-                                                            onClick={() => deleteCPTCode(group.id, code.code)}
-                                                            className="btn btn-destructive"
-                                                        >
-                                                            Delete
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-                    ))}
+.entry-list::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+}
 
-                    <div className="card mt-4">
-                        <div className="p-4">
-                            <h3 className="font-bold mb-2">Add New CPT Code</h3>
-                            <div className="flex gap-2 flex-wrap">
-                                <select
-                                    value={newCode.groupId}
-                                    onChange={(e) => setNewCode({ ...newCode, groupId: e.target.value })}
-                                    className="input"
-                                    style={{ width: 'auto' }}
-                                >
-                                    <option value="">Select Group</option>
-                                    {cptGroups.map(group => (
-                                        <option key={group.id} value={group.id}>{group.title}</option>
-                                    ))}
-                                </select>
-                                <input
-                                    placeholder="CPT Code"
-                                    value={newCode.code}
-                                    onChange={(e) => setNewCode({ ...newCode, code: e.target.value })}
-                                    className="input"
-                                    style={{ width: 'auto' }}
-                                />
-                                <input
-                                    placeholder="Description"
-                                    value={newCode.description}
-                                    onChange={(e) => setNewCode({ ...newCode, description: e.target.value })}
-                                    className="input flex-1"
-                                />
-                                <input
-                                    placeholder="wRVUs"
-                                    type="number"
-                                    step="0.01"
-                                    value={newCode.wrvus}
-                                    onChange={(e) => setNewCode({ ...newCode, wrvus: e.target.value })}
-                                    className="input"
-                                    style={{ width: 'auto' }}
-                                />
-                                <button onClick={addCPTCode} className="btn btn-primary">
-                                    Save
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+.entry-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    background-color: #f8fafc;
+    border-radius: 0.5rem;
+    margin-bottom: 0.5rem;
+    transition: all 0.2s;
+    border: 1px solid var(--border);
+}
 
-                    <div className="card mt-4">
-                        <div className="p-4">
-                            <button onClick={addNewGroup} className="btn btn-primary">
-                                Add New Group
-                            </button>
-                        </div>
-                    </div>
+.entry-item:hover {
+    background-color: #f1f5f9;
+    transform: translateX(2px);
+}
 
-                    <div className="card mt-4">
-                        <div className="p-4">
-                            <div className="flex justify-between items-center mb-4">
-                                <h3 className="font-bold">Daily Entries for {selectedDate}</h3>
-                                <div className="text-sm">
-                                    Daily Total: {getDailyWRVUs(selectedDate)} wRVUs
-                                </div>
-                            </div>
-                            <div className="entry-list">
-                                {dailyEntries
-                                    .filter(entry => entry.date === selectedDate)
-                                    .map((entry) => (
-                                        <div key={entry.timestamp} className="entry-item">
-                                            <div>
-                                                <span className="font-medium">{entry.cptCode}</span>
-                                                <span className="ml-2 text-gray-600">{entry.wrvus} wRVUs</span>
-                                            </div>
-                                            <button
-                                                onClick={() => deleteEntry(entry.timestamp)}
-                                                className="btn btn-destructive"
-                                            >
-                                                Delete
-                                            </button>
-                                        </div>
-                                    ))}
-                            </div>
-                        </div>
-                    </div>
+/* Responsive container */
+.container {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
 
-                    <div className="card mt-4">
-                        <div className="p-4">
-                            <button onClick={exportToCSV} className="btn btn-primary">
-                                Export to CSV
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-};
+/* Stats display */
+.stats {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--primary);
+    text-align: right;
+    margin-bottom: 1rem;
+    padding: 0.5rem 1rem;
+    background-color: #f8fafc;
+    border-radius: 0.5rem;
+    border: 1px solid var(--border);
+}
 
-ReactDOM.render(<WRVUTracker />, document.getElementById('root'));
+/* Data management section */
+.data-management {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem;
+    background-color: #f8fafc;
+    border-radius: 0.5rem;
+    border: 1px solid var(--border);
+}
+
+/* CPT Code cards */
+.cpt-card {
+    background: linear-gradient(145deg, #ffffff, #f8fafc);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    padding: 1rem;
+}
+
+.cpt-code {
+    color: var(--primary);
+    font-size: 1.125rem;
+    font-weight: 600;
+}
+
+.cpt-description {
+    color: var(--text-secondary);
+    margin: 0.25rem 0;
+}
+
+.cpt-wrvus {
+    color: var(--success);
+    font-weight: 500;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.card {
+    animation: fadeIn 0.3s ease-out;
+}
+
+/* File input styling */
+input[type="file"] {
+    display: none;
+}
+
+.file-input-label {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.625rem 1.25rem;
+    border-radius: 0.5rem;
+    background-color: var(--primary);
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 500;
+    font-size: 0.875rem;
+}
+
+.file-input-label:hover {
+    background-color: var(--primary-hover);
+    transform: translateY(-1px);
+}
+
+/* Date input styling */
+input[type="date"] {
+    padding: 0.625rem;
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    background-color: white;
+}
+
+input[type="date"]:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
+}
