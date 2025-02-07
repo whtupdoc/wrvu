@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Synced Notes</title>
+    <title>My Website</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -12,17 +12,32 @@
             background-color: #f0f2f5;
         }
         
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
+        .login-container {
+            max-width: 400px;
+            margin: 40px auto;
             background-color: white;
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
-        .login-section, .notes-section {
+        .main-content {
+            display: none; /* Hidden until login */
+        }
+
+        .website-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             margin-bottom: 20px;
+        }
+
+        .notes-section {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
         textarea {
@@ -41,6 +56,7 @@
             border: none;
             border-radius: 4px;
             cursor: pointer;
+            margin-right: 10px;
         }
 
         button:hover {
@@ -55,36 +71,48 @@
             width: 200px;
         }
 
-        .notes-section {
-            display: none;
+        .logout-button {
+            background-color: #dc3545;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="login-section" id="loginSection">
-            <h2>Login</h2>
-            <input type="password" id="password" placeholder="Enter password">
-            <button onclick="login()">Login</button>
+    <!-- Login Section -->
+    <div class="login-container" id="loginSection">
+        <h2>Login</h2>
+        <input type="password" id="password" placeholder="Enter password">
+        <button onclick="login()">Login</button>
+    </div>
+
+    <!-- Main Content (Hidden until login) -->
+    <div class="main-content" id="mainContent">
+        <!-- Your Website Content -->
+        <div class="website-content">
+            <h1>Welcome to My Website</h1>
+            <!-- PUT YOUR EXISTING WEBSITE CONTENT HERE -->
+            <p>This is where your existing website content goes.</p>
         </div>
 
-        <div class="notes-section" id="notesSection">
+        <!-- Notes Section -->
+        <div class="notes-section">
             <h2>My Notes</h2>
             <textarea id="notesArea" placeholder="Enter your notes here..."></textarea>
-            <button onclick="saveNotes()">Save Notes</button>
-            <button onclick="logout()" style="background-color: #dc3545;">Logout</button>
+            <div>
+                <button onclick="saveNotes()">Save Notes</button>
+                <button class="logout-button" onclick="logout()">Logout</button>
+            </div>
         </div>
     </div>
 
     <script>
-        const CORRECT_PASSWORD = "Jimmyr123";
+        const CORRECT_PASSWORD = "heybuddy";
         const SHEET_URL = "https://script.google.com/macros/s/AKfycbysTWoI0ohwLl3v4WuLln6RLiWjD88O5l23FgjdTyTiGZhOBi3FxCzkFEwK8xAJyxP9uQ/exec";
         
         // Check login status on load
         window.onload = function() {
             const isLoggedIn = localStorage.getItem('isLoggedIn');
             if (isLoggedIn === 'true') {
-                showNotes();
+                showContent();
                 loadNotes();
             }
         };
@@ -93,7 +121,7 @@
             const password = document.getElementById('password').value;
             if (password === CORRECT_PASSWORD) {
                 localStorage.setItem('isLoggedIn', 'true');
-                showNotes();
+                showContent();
                 loadNotes();
             } else {
                 alert('Incorrect password');
@@ -103,12 +131,12 @@
         function logout() {
             localStorage.removeItem('isLoggedIn');
             document.getElementById('loginSection').style.display = 'block';
-            document.getElementById('notesSection').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'none';
         }
 
-        function showNotes() {
+        function showContent() {
             document.getElementById('loginSection').style.display = 'none';
-            document.getElementById('notesSection').style.display = 'block';
+            document.getElementById('mainContent').style.display = 'block';
         }
 
         function saveNotes() {
