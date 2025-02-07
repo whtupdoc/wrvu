@@ -7,7 +7,6 @@ const WRVUTracker = () => {
             { code: '99213', description: 'Office Visit Level 3', wrvus: 0.97 },
             { code: '99214', description: 'Office Visit Level 4', wrvus: 1.5 },
             { code: '99215', description: 'Office Visit Level 5', wrvus: 2.11 }
-            { code: '99232', description: 'Est Inpatient Level 2', wrvus: 2.61 }
         ];
     });
 
