@@ -366,7 +366,6 @@ const WRVUTracker = () => {
             });
         }
     };
-
     // Drag and Drop handlers for CPT Codes
     const handleCodeDragStart = (e, groupId, code) => {
         setDragCode({ groupId, code: code.code });
@@ -527,7 +526,6 @@ const WRVUTracker = () => {
         </div>
     );
 };
-
 ReactDOM.render(<WRVUTracker />, document.getElementById('root'));
 /* Add these styles to your existing CSS */
 
