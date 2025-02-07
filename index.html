@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Synced Notes</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f2f5;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .login-section, .notes-section {
+            margin-bottom: 20px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 200px;
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #1a73e8;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #1557b0;
+        }
+
+        input {
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 200px;
+        }
+
+        .notes-section {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="login-section" id="loginSection">
+            <h2>Login</h2>
+            <input type="password" id="password" placeholder="Enter password">
+            <button onclick="login()">Login</button>
+        </div>
+
+        <div class="notes-section" id="notesSection">
+            <h2>My Notes</h2>
+            <textarea id="notesArea" placeholder="Enter your notes here..."></textarea>
+            <button onclick="saveNotes()">Save Notes</button>
+            <button onclick="logout()" style="background-color: #dc3545;">Logout</button>
+        </div>
+    </div>
+
+    <script>
+        const CORRECT_PASSWORD = "Jimmyr123";
+        const SHEET_URL = "https://script.google.com/macros/s/AKfycbyVdtvjGCLnKXYKwFV5P_cW07CfiXvQmCE3vrJ6M2KmqbySQ9E-zA1g7p3WT6Vs1Y3mYA/exec";
+        
+        // Check login status on load
+        window.onload = function() {
+            const isLoggedIn = localStorage.getItem('isLoggedIn');
+            if (isLoggedIn === 'true') {
+                showNotes();
+                loadNotes();
+            }
+        };
+
+        function login() {
+            const password = document.getElementById('password').value;
+            if (password === CORRECT_PASSWORD) {
+                localStorage.setItem('isLoggedIn', 'true');
+                showNotes();
+                loadNotes();
+            } else {
+                alert('Incorrect password');
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('isLoggedIn');
+            document.getElementById('loginSection').style.display = 'block';
+            document.getElementById('notesSection').style.display = 'none';
+        }
+
+        function showNotes() {
+            document.getElementById('loginSection').style.display = 'none';
+            document.getElementById('notesSection').style.display = 'block';
+        }
+
+        function saveNotes() {
+            const notes = document.getElementById('notesArea').value;
+            fetch(SHEET_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ notes: notes })
+            }).then(() => {
+                alert('Notes saved successfully!');
+            }).catch(error => {
+                console.error('Error:', error);
+                alert('Error saving notes');
+            });
+        }
+
+        function loadNotes() {
+            fetch(SHEET_URL)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('notesArea').value = data.notes || '';
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
+    </script>
+</body>
+</html>
