@@ -252,3 +252,34 @@ input[type="date"]:focus {
     border-color: var(--primary);
     box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
 }
+/* Add these styles to your existing CSS */
+
+.cursor-move {
+    cursor: move;
+}
+
+.border-primary {
+    border-color: var(--primary) !important;
+}
+
+.border-2 {
+    border-width: 2px !important;
+}
+
+/* Drag and drop visual feedback */
+[draggable="true"] {
+    transition: all 0.2s ease;
+}
+
+[draggable="true"]:hover {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Handle icon styles */
+.card-title::before,
+.font-bold::before {
+    content: "≡";
+    margin-right: 0.5rem;
+    color: var(--text-secondary);
+    cursor: move;
+}
